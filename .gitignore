@@ -1,0 +1,4 @@
+bin
+*.jpg
+*.mp4
+extractKeyFrame.jar
