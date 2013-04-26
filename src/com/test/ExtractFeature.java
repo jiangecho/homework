@@ -6,6 +6,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Iterator;
 
+import javax.imageio.ImageIO;
+
+import net.semanticmetadata.lire.imageanalysis.ColorLayout;
+
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
@@ -57,10 +63,27 @@ public class ExtractFeature {
 			
 			String keyFramePath;
 			String name;
+			BufferedImage bi;
+			FSDataOutputStream fsos;
+			FSDataInputStream is;
+			ColorLayout cl = new ColorLayout();
+			
+			hdfs.mkdirs(new Path(RESULT_DIR + videoName + "/feature"));
 			for (Path path : paths) {
 				keyFramePath = path.toString();
 				name  = keyFramePath.substring(keyFramePath.lastIndexOf('/') + 1);
 				keyFrameFileName.set(name);
+				
+				is = hdfs.open(path);
+				//bi = ImageIO.read(new File(keyFramePath));
+				bi = ImageIO.read(is);
+				cl.extract(bi);
+				
+				fsos = hdfs.create(new Path(RESULT_DIR + videoName + "/feature/" + name + ".feature"));
+				fsos.writeChars(cl.getStringRepresentation());
+				is.close();
+				fsos.close();
+				
 				output.collect(keyFrameFileName, new IntWritable(0));
 			}
 		}
@@ -90,7 +113,6 @@ public class ExtractFeature {
 		conf.setInputFormat(TextInputFormat.class);
 		conf.setOutputFormat(TextOutputFormat.class);
 
-		
 		FileInputFormat.setInputPaths(conf, new Path(args[0]));
 		FileOutputFormat.setOutputPath(conf, new Path(args[1]));
 

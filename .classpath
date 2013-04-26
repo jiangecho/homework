@@ -44,7 +44,7 @@
 	<classpathentry kind="lib" path="/home/xianer/app/hadoop-1.0.4/lib/commons-beanutils-core-1.8.0.jar"/>
 	<classpathentry kind="lib" path="/home/xianer/app/hadoop-1.0.4/lib/jdeb-0.8.jar"/>
 	<classpathentry kind="lib" path="/home/xianer/app/hadoop-1.0.4/lib/asm-3.2.jar"/>
-	<classpathentry kind="lib" path="/home/xianer/app/hadoop-1.0.4/lib/commons-math-2.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/home/xianer/app/hadoop-1.0.4/lib/commons-math-2.1.jar"/>
 	<classpathentry kind="lib" path="/home/xianer/app/hadoop-1.0.4/lib/xmlenc-0.52.jar"/>
 	<classpathentry kind="lib" path="/home/xianer/app/hadoop-1.0.4/lib/aspectjtools-1.6.5.jar"/>
 	<classpathentry kind="lib" path="/home/xianer/app/hadoop-1.0.4/hadoop-client-1.0.4.jar"/>
@@ -56,11 +56,11 @@
 	<classpathentry kind="lib" path="/home/xianer/app/hadoop-1.0.4/hadoop-minicluster-1.0.4.jar"/>
 	<classpathentry kind="lib" path="/home/xianer/app/hadoop-1.0.4/hadoop-ant-1.0.4.jar"/>
 	<classpathentry kind="lib" path="/home/xianer/app/hadoop-1.0.4/hadoop-tools-1.0.4.jar"/>
-	<classpathentry kind="lib" path="/home/xianer/workspace/MultiMedia/lib/lire.jar"/>
-	<classpathentry kind="lib" path="/home/xianer/workspace/MultiMedia/lib/commons-math3-3.0.jar"/>
-	<classpathentry kind="lib" path="/home/xianer/workspace/MultiMedia/lib/JOpenSurf.jar"/>
-	<classpathentry kind="lib" path="/home/xianer/workspace/MultiMedia/lib/lucene-analyzers-common-4.0.0.jar"/>
-	<classpathentry kind="lib" path="/home/xianer/workspace/MultiMedia/lib/lucene-core-4.0.0.jar"/>
-	<classpathentry kind="lib" path="/home/xianer/workspace/MultiMedia/lib/lucene-queryparser-4.0.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/home/xianer/workspace/MultiMedia/lib/lire.jar"/>
+	<classpathentry exported="true" kind="lib" path="/home/xianer/workspace/MultiMedia/lib/commons-math3-3.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/home/xianer/workspace/MultiMedia/lib/JOpenSurf.jar"/>
+	<classpathentry exported="true" kind="lib" path="/home/xianer/workspace/MultiMedia/lib/lucene-analyzers-common-4.0.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/home/xianer/workspace/MultiMedia/lib/lucene-core-4.0.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="/home/xianer/workspace/MultiMedia/lib/lucene-queryparser-4.0.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
