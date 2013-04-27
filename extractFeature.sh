@@ -1,13 +1,15 @@
 #!/bin/bash
-echo $1 >> hello
 filename=${1##*/}
 echo $filename >> hello
 keyFrameDir=output/dataset/${filename}/keyFrame/
+audioDir=output/dataset/${filename}/audio/
 echo $keyFrameDir
-echo $keyFrameDir >> hello
+echo $audioDir
 hadoop fs -mkdir "$keyFrameDir"
-hadoop fs -mkdir jiang
+hadoop fs -mkdir "$audioDir"
 ffmpeg -i "$1" -vf select="eq(pict_type\,I)" -vsync 2 -s 300x225 "${filename}_%02d.jpg"
+ffmpeg -i "$1" -ar 16K -ac 1 "${filename}.wav"
 hadoop fs -put "${filename}_"*.jpg "$keyFrameDir"
-rm ${filename}_*.jpg
+hadoop fs -put "${filename}.wav"  "$audioDir"
+rm "${filename}_"*.jpg
 
