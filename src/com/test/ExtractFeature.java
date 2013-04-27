@@ -10,6 +10,8 @@ import javax.imageio.ImageIO;
 
 import net.semanticmetadata.lire.imageanalysis.ColorLayout;
 
+import org.apache.commons.math3.exception.NullArgumentException;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -35,18 +37,19 @@ public class ExtractFeature {
 
 	public static class Map extends MapReduceBase implements
 			Mapper<LongWritable, Text, Text, IntWritable> {
-		private final static String cmd = "extractKeyFrame.sh ";
+		private final static String CMD = "/home/xianer/workspace/MultiMedia/extractKeyFrame.sh";
 		private final static String RESULT_DIR = "output/dataset/";
 
 		public void map(LongWritable key, Text value,
 				OutputCollector<Text, IntWritable> output, Reporter reporter)
 				throws IOException{
 			String videoLocalFullName = value.toString();
-			String videoLocalPath = videoLocalFullName.substring(0, videoLocalFullName.lastIndexOf('/') + 1);
 			String videoName = videoLocalFullName.substring(videoLocalFullName.lastIndexOf('/') + 1);
+			String[] cmds = new String[] {CMD,  videoLocalFullName};
 			
 			try {
-				Process process = Runtime.getRuntime().exec(videoLocalPath + cmd + videoLocalFullName);
+				//call a shell script to extract the keyFrames, and then upload the keyFrames to hdfs
+				Process process = Runtime.getRuntime().exec(cmds);
 				process.waitFor();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -54,11 +57,10 @@ public class ExtractFeature {
 			
 			
 			Text keyFrameFileName = new Text();
-
 			JobConf conf = new JobConf();
 			String hdfsDefaultPath = conf.get("fs.default.name");
 			FileSystem hdfs = FileSystem.get(URI.create(hdfsDefaultPath), conf);
-			FileStatus[] fileStatus = hdfs.listStatus(new Path(RESULT_DIR + videoName + "/keyFrame"));
+			FileStatus[] fileStatus = hdfs.listStatus(new Path(hdfsDefaultPath + "/" + RESULT_DIR + videoName + "/keyFrame"));
 			Path[] paths = FileUtil.stat2Paths(fileStatus);
 			
 			String keyFramePath;
@@ -68,19 +70,22 @@ public class ExtractFeature {
 			FSDataInputStream is;
 			ColorLayout cl = new ColorLayout();
 			
-			hdfs.mkdirs(new Path(RESULT_DIR + videoName + "/feature"));
+			hdfs.mkdirs(new Path(hdfsDefaultPath + "/" + RESULT_DIR + videoName + "/feature"));
+			
 			for (Path path : paths) {
 				keyFramePath = path.toString();
 				name  = keyFramePath.substring(keyFramePath.lastIndexOf('/') + 1);
 				keyFrameFileName.set(name);
 				
+				//extract the keyFrame's  feature
 				is = hdfs.open(path);
-				//bi = ImageIO.read(new File(keyFramePath));
 				bi = ImageIO.read(is);
 				cl.extract(bi);
 				
 				fsos = hdfs.create(new Path(RESULT_DIR + videoName + "/feature/" + name + ".feature"));
 				fsos.writeChars(cl.getStringRepresentation());
+				
+				// remember to close the stream
 				is.close();
 				fsos.close();
 				
