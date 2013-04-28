@@ -1,8 +1,8 @@
 #!/bin/bash
 filename=${1##*/}
 echo $filename >> hello
-keyFrameDir=output/dataset/${filename}/keyFrame/
-audioDir=output/dataset/${filename}/audio/
+keyFrameDir=/output/dataset/${filename}/keyFrame/
+audioDir=/output/dataset/${filename}/audio/
 echo $keyFrameDir
 echo $audioDir
 hadoop fs -mkdir "$keyFrameDir"

@@ -1,4 +1,6 @@
 bin
+output
 *.jpg
 *.mp4
 extractKeyFrame.jar
+extract.jar

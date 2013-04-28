@@ -41,14 +41,13 @@ public class ExtractFeature {
 
 	public static class Map extends MapReduceBase implements
 			Mapper<LongWritable, Text, Text, IntWritable> {
-		private final static String CMD = "/home/xianer/workspace/MultiMedia/extractFeature.sh";
-		private final static String LOCAL_FEATURESXML = "/home/xianer/workspace/MultiMedia/features.xml";
-		private final static String RESULT_DIR = "output/dataset/";
 
 		@Override
 		public void map(LongWritable key, Text value,
 				OutputCollector<Text, IntWritable> output, Reporter reporter)
 				throws IOException{
+			JobConf conf = new JobConf();
+			String CMD = conf.get("hadoop.local.work.dir") + "/" + "extractFeature.sh";
 			String videoLocalFullName = value.toString();
 			String videoName = videoLocalFullName.substring(videoLocalFullName.lastIndexOf('/') + 1);
 			String[] cmds = new String[] {CMD,  videoLocalFullName};
@@ -65,11 +64,7 @@ public class ExtractFeature {
 			System.out.println("extract over");
 			
 			Text keyFrameFileName = new Text();
-			JobConf conf = new JobConf();
-			//String hdfsOutputPath = conf.get("fs.default.name") + "/user/xianer/output/dataset/";
-			//String hdfsInputPath = conf.get("fs.default.name") + "/user/xianer/input/";
-			String hdfsOutputPath = "hdfs://localhost:9000/user/xianer" + "/output/dataset/";
-			String hdfsInputPath = "hdfs://localhost:9000/user/xianer" + "/input/";
+			String hdfsOutputPath = conf.get("fs.default.name") + "/output/dataset/";
 			String hdfsKeyFramePath = hdfsOutputPath + videoName +  "/keyFrame/";
 			String hdfsKeyFrameFeaturePath = hdfsOutputPath + videoName + "/keyFrameFeature/";
 			String hdfsAudioPath = hdfsOutputPath + videoName + "/audio/";
@@ -117,25 +112,21 @@ public class ExtractFeature {
 			}
 			
 			String hdfsAudioFullName = hdfsAudioPath + videoName + ".wav";
-			String hdfsAudioFeaturesXMLFullName = hdfsInputPath + "features.xml";
 			
+			// extract audio's mfcc feature
+			// TODO try to refactor the following lines
 			if (hdfs.exists(new Path(hdfsAudioFullName))) {
 				RecordingInfo[] info = new RecordingInfo[1];
-				//FSDataInputStream[] ins = new FSDataInputStream[1];
 				InputStream[] ins = new InputStream[1];
 				String[] names = new String[1]; 
 				names[0] = hdfsAudioFullName; 
-				//ins[0] = new FSDataInputStream(hdfs.open(new Path(hdfsAudioFullName)));
 				ins[0] = new BufferedInputStream(hdfs.open(new Path(hdfsAudioFullName)));
-				//ins[0] = new BufferedFSInputStream(new FSDataInputStream(hdfs.open(new Path(hdfsAudioFullName) )), 1024);
 				info[0] = new RecordingInfo(hdfsAudioFullName);
 				info[0].should_extract_features = true;
-				//DataModelForMFCC2D dm = new DataModelForMFCC2D(hdfsAudioFeaturesXMLFullName, null);
-				//DataModelForMFCC2D dm = new DataModelForMFCC2D(LOCAL_FEATURESXML, null);
 				DataModelForMFCC2D dm = new DataModelForMFCC2D("features.xml", null, ins, names);
 				
-				fsos = hdfs.create(new Path(hdfsAudioFeaturePath + videoName + ".wav_feature.xml"));
-				fsos2 = hdfs.create(new Path(hdfsAudioFeaturePath + videoName + ".wav_feature_definition.xml"));
+				fsos2 = hdfs.create(new Path(hdfsAudioFeaturePath + videoName + ".wav_feature.xml"));
+				fsos = hdfs.create(new Path(hdfsAudioFeaturePath + videoName + ".wav_feature_definition.xml"));
 				try {
 					dm.featureKey = fsos;
 					dm.featureValue = fsos2;
@@ -143,10 +134,6 @@ public class ExtractFeature {
 				} catch (Exception e1) {
 					e1.printStackTrace();
 				}finally{
-					fsos.flush();
-					fsos2.flush();
-					fsos.sync();
-					fsos2.sync();
 					fsos.close();
 					fsos2.close();
 				}
