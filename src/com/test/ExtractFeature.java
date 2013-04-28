@@ -1,8 +1,12 @@
 package com.test;
 
+import jAudioFeatureExtractor.DataTypes.RecordingInfo;
+
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.Iterator;
 
@@ -10,8 +14,8 @@ import javax.imageio.ImageIO;
 
 import net.semanticmetadata.lire.imageanalysis.ColorLayout;
 
-import org.apache.commons.math3.exception.NullArgumentException;
-import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.filecache.DistributedCache;
+import org.apache.hadoop.fs.BufferedFSInputStream;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -38,8 +42,10 @@ public class ExtractFeature {
 	public static class Map extends MapReduceBase implements
 			Mapper<LongWritable, Text, Text, IntWritable> {
 		private final static String CMD = "/home/xianer/workspace/MultiMedia/extractFeature.sh";
+		private final static String LOCAL_FEATURESXML = "/home/xianer/workspace/MultiMedia/features.xml";
 		private final static String RESULT_DIR = "output/dataset/";
 
+		@Override
 		public void map(LongWritable key, Text value,
 				OutputCollector<Text, IntWritable> output, Reporter reporter)
 				throws IOException{
@@ -60,12 +66,15 @@ public class ExtractFeature {
 			
 			Text keyFrameFileName = new Text();
 			JobConf conf = new JobConf();
-			String hdfsOutputPath = conf.get("fs.default.name") + "/user/xianer/output/dataset/";
-			//String hdfsOutputPath = "hdfs://localhost:9000/user/xianer" + "/output/dataset/";
+			//String hdfsOutputPath = conf.get("fs.default.name") + "/user/xianer/output/dataset/";
+			//String hdfsInputPath = conf.get("fs.default.name") + "/user/xianer/input/";
+			String hdfsOutputPath = "hdfs://localhost:9000/user/xianer" + "/output/dataset/";
+			String hdfsInputPath = "hdfs://localhost:9000/user/xianer" + "/input/";
 			String hdfsKeyFramePath = hdfsOutputPath + videoName +  "/keyFrame/";
 			String hdfsKeyFrameFeaturePath = hdfsOutputPath + videoName + "/keyFrameFeature/";
 			String hdfsAudioPath = hdfsOutputPath + videoName + "/audio/";
 			String hdfsAudioFeaturePath = hdfsOutputPath + videoName + "/audioFeature/";
+			
 			
 			System.out.println(hdfsKeyFramePath);
 			System.out.println(hdfsKeyFrameFeaturePath);
@@ -78,35 +87,78 @@ public class ExtractFeature {
 			String name;
 			BufferedImage bi;
 			FSDataOutputStream fsos;
-			FSDataInputStream is;
+			FSDataOutputStream fsos2;
+			FSDataInputStream fsis;
+			
 			ColorLayout cl = new ColorLayout();
 			
 			hdfs.mkdirs(new Path(hdfsKeyFrameFeaturePath));
+			hdfs.mkdirs(new Path(hdfsAudioFeaturePath));
 			
+			// extract the keyFrames' features one by one
 			for (Path path : paths) {
 				keyFramePath = path.toString();
 				name  = keyFramePath.substring(keyFramePath.lastIndexOf('/') + 1);
 				keyFrameFileName.set(name);
 				
 				//extract the keyFrame's  feature
-				is = hdfs.open(path);
-				bi = ImageIO.read(is);
+				fsis = hdfs.open(path);
+				bi = ImageIO.read(fsis);
 				cl.extract(bi);
 				
 				fsos = hdfs.create(new Path(hdfsKeyFrameFeaturePath + name + ".feature"));
 				fsos.writeChars(cl.getStringRepresentation());
 				
 				// remember to close the stream
-				is.close();
+				fsis.close();
 				fsos.close();
 				
 				output.collect(keyFrameFileName, new IntWritable(0));
 			}
+			
+			String hdfsAudioFullName = hdfsAudioPath + videoName + ".wav";
+			String hdfsAudioFeaturesXMLFullName = hdfsInputPath + "features.xml";
+			
+			if (hdfs.exists(new Path(hdfsAudioFullName))) {
+				RecordingInfo[] info = new RecordingInfo[1];
+				//FSDataInputStream[] ins = new FSDataInputStream[1];
+				InputStream[] ins = new InputStream[1];
+				String[] names = new String[1]; 
+				names[0] = hdfsAudioFullName; 
+				//ins[0] = new FSDataInputStream(hdfs.open(new Path(hdfsAudioFullName)));
+				ins[0] = new BufferedInputStream(hdfs.open(new Path(hdfsAudioFullName)));
+				//ins[0] = new BufferedFSInputStream(new FSDataInputStream(hdfs.open(new Path(hdfsAudioFullName) )), 1024);
+				info[0] = new RecordingInfo(hdfsAudioFullName);
+				info[0].should_extract_features = true;
+				//DataModelForMFCC2D dm = new DataModelForMFCC2D(hdfsAudioFeaturesXMLFullName, null);
+				//DataModelForMFCC2D dm = new DataModelForMFCC2D(LOCAL_FEATURESXML, null);
+				DataModelForMFCC2D dm = new DataModelForMFCC2D("features.xml", null, ins, names);
+				
+				fsos = hdfs.create(new Path(hdfsAudioFeaturePath + videoName + ".wav_feature.xml"));
+				fsos2 = hdfs.create(new Path(hdfsAudioFeaturePath + videoName + ".wav_feature_definition.xml"));
+				try {
+					dm.featureKey = fsos;
+					dm.featureValue = fsos2;
+					dm.extract(512, 0, 16000, false, true, true, info, 0);
+				} catch (Exception e1) {
+					e1.printStackTrace();
+				}finally{
+					fsos.flush();
+					fsos2.flush();
+					fsos.sync();
+					fsos2.sync();
+					fsos.close();
+					fsos2.close();
+				}
+			}
+			
+			
 		}
 	}
 
 	public static class Reduce extends MapReduceBase implements
 			Reducer<Text, IntWritable, Text, IntWritable> {
+		@Override
 		public void reduce(Text key, Iterator<IntWritable> values,
 				OutputCollector<Text, IntWritable> output, Reporter reporter)
 				throws IOException {
@@ -116,6 +168,7 @@ public class ExtractFeature {
 
 	public static void main(String[] args) throws Exception {
 		JobConf conf = new JobConf(ExtractFeature.class);
+		
 		conf.setJobName("extractFeature");
 		conf.setJarByClass(ExtractFeature.class);
 
@@ -128,9 +181,14 @@ public class ExtractFeature {
 
 		conf.setInputFormat(TextInputFormat.class);
 		conf.setOutputFormat(TextOutputFormat.class);
+		
 
 		FileInputFormat.setInputPaths(conf, new Path(args[0]));
 		FileOutputFormat.setOutputPath(conf, new Path(args[1]));
+		
+		conf.set("mapred.create.symlink", "yes");
+		DistributedCache.createSymlink(conf);
+		DistributedCache.addCacheFile(new URI("hdfs://localhost:9000" + "/conf/features.xml#features.xml"), conf);
 
 		JobClient.runJob(conf);
 

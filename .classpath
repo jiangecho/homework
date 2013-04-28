@@ -62,5 +62,6 @@
 	<classpathentry exported="true" kind="lib" path="/home/xianer/workspace/MultiMedia/lib/lucene-analyzers-common-4.0.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="/home/xianer/workspace/MultiMedia/lib/lucene-core-4.0.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="/home/xianer/workspace/MultiMedia/lib/lucene-queryparser-4.0.0.jar"/>
+	<classpathentry kind="lib" path="/home/xianer/workspace/MultiMedia/lib/jAudio-1.0.4.jar" sourcepath="/home/xianer/app/jAudio/jAudio/src"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
