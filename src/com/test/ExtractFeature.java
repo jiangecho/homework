@@ -37,6 +37,8 @@ import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.TextInputFormat;
 import org.apache.hadoop.mapred.TextOutputFormat;
 
+import com.test.mfcc12.DataModelForMFCC2D;
+
 public class ExtractFeature {
 
 	public static class Map extends MapReduceBase implements
