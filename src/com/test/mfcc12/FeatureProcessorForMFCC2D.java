@@ -1,4 +1,4 @@
-package com.test;
+package com.test.mfcc12;
 /*
  * @(#)FeatureProcessor.java	1.01	April 9, 2005.
  *

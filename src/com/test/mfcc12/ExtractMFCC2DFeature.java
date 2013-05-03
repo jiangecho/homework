@@ -1,4 +1,4 @@
-package com.test;
+package com.test.mfcc12;
 import jAudioFeatureExtractor.DataTypes.RecordingInfo;
 
 import java.io.BufferedInputStream;
