@@ -4,3 +4,9 @@ output
 *.mp4
 extractKeyFrame.jar
 extract.jar
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
