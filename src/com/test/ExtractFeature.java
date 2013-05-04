@@ -42,11 +42,11 @@ import com.test.mfcc12.DataModelForMFCC2D;
 public class ExtractFeature {
 
 	public static class Map extends MapReduceBase implements
-			Mapper<LongWritable, Text, Text, IntWritable> {
+			Mapper<LongWritable, Text, Text, Text> {
 
 		@Override
 		public void map(LongWritable key, Text value,
-				OutputCollector<Text, IntWritable> output, Reporter reporter)
+				OutputCollector<Text, Text> output, Reporter reporter)
 				throws IOException{
 			JobConf conf = new JobConf();
 			String CMD = conf.get("hadoop.local.work.dir") + "/" + "extractFeature.sh";
@@ -66,6 +66,7 @@ public class ExtractFeature {
 			System.out.println("extract over");
 			
 			Text keyFrameFileName = new Text();
+			Text keyFrameFeature = new Text();
 			String hdfsOutputPath = conf.get("fs.default.name") + "/output/dataset/";
 			String hdfsKeyFramePath = hdfsOutputPath + videoName +  "/keyFrame/";
 			String hdfsKeyFrameFeaturePath = hdfsOutputPath + videoName + "/keyFrameFeature/";
@@ -110,7 +111,8 @@ public class ExtractFeature {
 				fsis.close();
 				fsos.close();
 				
-				output.collect(keyFrameFileName, new IntWritable(0));
+				keyFrameFeature.set(cl.getStringRepresentation());
+				output.collect(keyFrameFileName, keyFrameFeature);
 			}
 			
 			String hdfsAudioFullName = hdfsAudioPath + videoName + ".wav";
@@ -146,12 +148,13 @@ public class ExtractFeature {
 	}
 
 	public static class Reduce extends MapReduceBase implements
-			Reducer<Text, IntWritable, Text, IntWritable> {
+			Reducer<Text, Text, Text, Text> {
 		@Override
-		public void reduce(Text key, Iterator<IntWritable> values,
-				OutputCollector<Text, IntWritable> output, Reporter reporter)
+		public void reduce(Text key, Iterator<Text> values,
+				OutputCollector<Text, Text> output, Reporter reporter)
 				throws IOException {
-			output.collect(key, new IntWritable(1));
+			
+			output.collect(key, values.next());
 		}
 	}
 
@@ -162,7 +165,7 @@ public class ExtractFeature {
 		conf.setJarByClass(ExtractFeature.class);
 
 		conf.setOutputKeyClass(Text.class);
-		conf.setOutputValueClass(IntWritable.class);
+		conf.setOutputValueClass(Text.class);
 
 		conf.setMapperClass(Map.class);
 		conf.setCombinerClass(Reduce.class);

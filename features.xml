@@ -68,7 +68,7 @@
 		<class>jAudioFeatureExtractor.AudioFeatures.StrongestFrequencyViaFFTMax</class>
 	</feature>
 	<feature>
-		<class>com.test.MFCC12</class>
+		<class>com.test.mfcc12.MFCC12</class>
 		<on/>
 	</feature>
 	<feature>
